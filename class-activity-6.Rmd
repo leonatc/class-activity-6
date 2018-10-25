@@ -6,11 +6,17 @@ output: html_document
 ---
 # Data Management
 ```{r}
+#
+library(dplyr)
+library(tidyr)
+
 #Load data
-DF1 <- read.csv("cluster.csv", header = TRUE)
+DF1 <- read.csv("HUDK405018-cluster.csv", header = TRUE)
   
 #Wrangle data
-DF1 <- DF1[3,]  
+DF1 <- DF1[3,] 
+df3 <- DF1[-c(1,2), ]  
+df4 <- select(df3, Q1_1, Q1_2)
 ```
 
 # Find lattitudes & longitudes for cities
@@ -19,7 +25,9 @@ install.packages("ggmap")
 library(ggmap)
 
 #Request lattitude and longitude from Google Maps API
+#Where did you live before you began your degree at Teachers College? - City
 DF2 <- geocode(as.character(DF1$Q1_1), output = "latlon", source = "dsk")
+df_ll <- geocode(as.character(df4$Q1_1), output = "latlon", source = "dsk")
 ```
 
 Now we will run the K-means clustering algorithm we talked about in class. 
@@ -35,28 +43,39 @@ Notice that in this case we have 5 variables and in class we only had 2. It is i
 Also, we need to choose the number of clusters we think are in the data. We will start with 4.
 
 ```{r}
-
-fit <- kmeans(LL, 1) 
+??kmeans
+fit <- kmeans(DF_LL, 1) 
+plot(DF_LL$lon, DF_LL$lat)
+results <- kmeans(DF_LL, 3)
 
 #We have created an object called "fit" that contains all the details of our clustering including which observations belong to each cluster.
 
 #We can access the list of clusters by typing "fit$cluster", the top row corresponds to the original order the rows were in. Notice we have deleted some rows.
 
 fit$cluster
+results$cluster
 
 #We can also attach these clusters to te original dataframe by using the "data.frame" command to create a new data frame called K4.
 
-DF3 <- data.frame(LL, fit$cluster)
+DF3 <- data.frame(DF2, fit$cluster)
+df_new <- data.frame(df_ll, results$cluster)
 
 #Have a look at the K4 dataframe. Lets change the names of the variables to make it more convenient with the names() command.
 
 names(DF3) <- c("1", "2", "3", "4", "5", "cluster") #c() stands for concatonate and it creates a vector of anything, in this case a vector of names.
+
+names(df_new) <- c("long", "lat", "cluster")
 
 ```
 
 # Visualize your clusters in ggplot
 ```{r}
 #Create a scatterplot that plots location of each student and colors the points according to their cluster 
+plot(df_new[c("lat", "long")], col = df_new$cluster)
+
+library(ggplot2)
+f <- ggplot(df_new, aes(lat, long)) + geom_jitter(color = df_new$cluster)
+f
 ```
 
 # Can you group students according to their weekly activities?
